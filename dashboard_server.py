@@ -576,12 +576,24 @@ async def handle_status(request: web.Request) -> web.Response:
 
 async def handle_index(request: web.Request) -> web.Response:
     content = FALLBACK_INDEX_HTML
-    if os.path.exists(TEMPLATE_PATH):
-        try:
-            with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
-                content = f.read()
-        except Exception:
-            pass
+    candidate_paths = [
+        TEMPLATE_PATH,
+        os.path.join(os.getcwd(), "templates", "index.html"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "index.html"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html"),
+        "templates/index.html",
+        "index.html",
+        "/opt/render/project/src/templates/index.html",
+        "/app/templates/index.html"
+    ]
+    for p in candidate_paths:
+        if p and os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    break
+            except Exception:
+                pass
     return web.Response(text=content, content_type="text/html", charset="utf-8")
 
 
