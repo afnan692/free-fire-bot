@@ -26,7 +26,7 @@ if sys.platform == "win32":
 from google_play_scraper import app as play_scraper
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
-from protobuf_decoder.protobuf_decoder import Parser
+# from protobuf_decoder.protobuf_decoder import Parser  # Package not available, removing
 from message_ids import MESSAGE_ID_TO_NAME
 import thunderFF_pb2
 import StartMatch_pb2
@@ -832,9 +832,18 @@ async def parse_results(parsed_results):
     return result_dict
 
 async def decode_protobuf(data):
-    parsed_results = Parser().parse(data)
-    parsed_results_dict = await parse_results(parsed_results)
-    return json.dumps(parsed_results_dict)
+    try:
+        # Try to use protobuf decoder if available
+        try:
+            from protobuf_decoder.protobuf_decoder import Parser
+            parsed_results = Parser().parse(data)
+            parsed_results_dict = await parse_results(parsed_results)
+            return json.dumps(parsed_results_dict)
+        except ImportError:
+            # Fallback: return raw data as hex
+            return data.hex() if isinstance(data, bytes) else str(data)
+    except Exception as e:
+        return str(data)
 
 async def build_majorlogin_payload(open_id, access_token, platform, client_version, device_info):
     try:
@@ -990,8 +999,12 @@ async def send_getlogin(data, base_url, token, release_version):
 
         dict_res = {}
         try:
-            parsed = Parser().parse(response_content.hex())
-            dict_res = await parse_results(parsed)
+            try:
+                from protobuf_decoder.protobuf_decoder import Parser
+                parsed = Parser().parse(response_content.hex())
+                dict_res = await parse_results(parsed)
+            except ImportError:
+                dict_res = {"raw_data": response_content.hex()}
         except Exception:
             pass
 

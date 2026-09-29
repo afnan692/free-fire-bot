@@ -3,4 +3,3 @@ httpx>=0.25.0
 google-play-scraper>=1.2.0
 pycryptodome>=3.19.0
 protobuf>=4.25.0
-protobuf-decoder>=1.0.0
